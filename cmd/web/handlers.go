@@ -14,6 +14,7 @@ import (
 "GET /snippet/view/{id}" - snippetView => Displays a specific snippet
 "GET /snippet/create" - Snippetcreate => Displays a form for creating a new snippet
 "POST /snippet/create" - snipptCreatePost => "Saves a new snippet"
+"GET /static/ - http.FileServer => Serves static assets like CSS and JavaScript files"
 */
 
 // Define a home handler function which writes a byte slice containing
@@ -28,8 +29,9 @@ func home(w http.ResponseWriter, r *http.Request) {
 // user, and then return from the handler so no subsequent code is executed.
 
 	files := []string{
-		"ui/html/base.tmpl.html",
-		"ui/html/pages/home.tmpl.html",
+		"ui/html/base.tmpl",
+		"ui/html/partials/nav.tmpl",
+		"ui/html/pages/home.tmpl",
 	}
 
 	ts, err := template.ParseFiles(files...)

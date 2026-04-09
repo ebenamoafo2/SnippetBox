@@ -1,6 +1,5 @@
-<!--We use the {{define "base"}}...{{end}} action as a wrapper 
-to define a distinct named template called base, which contains 
-the content we want to appear on every page. -->
+
+
 {{define "base"}}
 <!doctype html>
 <html lang="en">
@@ -10,6 +9,11 @@ the content we want to appear on every page. -->
      to denote that we want to invoke other named templates (called title and main)
       at a particular location in the HTML. -->
     <title>{{template "title" .}} - Snippetbox</title>
+    <!-- Link to the CSS stylesheet and favicon -->
+      <link rel='stylesheet' href='/static/css/main.css'>
+      <link rel='shortcut icon' href='/static/img/favicon.ico' type='image/x-icon'>
+      <!-- Also link to some fonts hosted by Google -->
+      <link rel='stylesheet' href='https://fonts.googleapis.com/css?family=Ubuntu+Mono:400,700'>
   </head>
   <body>
     <!--Note: If you’re wondering, 
@@ -19,6 +23,9 @@ the content we want to appear on every page. -->
     <header>
       <h1><a href="/">Snippetbox</a></h1>
     </header>
+
+    <!--Invoke the template nav -->
+    {{template "nav" .}}
 
     <main>{{template "main" .}}</main>
     <footer>Powered by <a href="https://golang.org/">Go</a></footer>
