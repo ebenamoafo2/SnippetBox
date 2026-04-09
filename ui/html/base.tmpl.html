@@ -1,0 +1,27 @@
+<!--We use the {{define "base"}}...{{end}} action as a wrapper 
+to define a distinct named template called base, which contains 
+the content we want to appear on every page. -->
+{{define "base"}}
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <!-- Inside this we use the {{template "title" .}} and {{template "main" .}} actions 
+     to denote that we want to invoke other named templates (called title and main)
+      at a particular location in the HTML. -->
+    <title>{{template "title" .}} - Snippetbox</title>
+  </head>
+  <body>
+    <!--Note: If you’re wondering, 
+    the dot at the end of the {{template "title" .}} and {{template "main" .}} action 
+    represents any dynamic data that you want to pass to the invoked template.
+     -->
+    <header>
+      <h1><a href="/">Snippetbox</a></h1>
+    </header>
+
+    <main>{{template "main" .}}</main>
+    <footer>Powered by <a href="https://golang.org/">Go</a></footer>
+  </body>
+</html>
+{{end}}

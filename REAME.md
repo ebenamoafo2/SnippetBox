@@ -31,3 +31,9 @@ values := w.Header().Values("Cache-Control")
 - `Del()` removes the header entirely.
 - `Get()` returns the first header value.
 - `Values()` returns all header values as a slice.
+
+## HTML TEMPLATING - CHECK THE HOME.TMPL.THML
+
+Now that we’ve created a template file containing the HTML markup for the home page, the next question is how do we get our home handler to render it?
+
+For this we need to use Go’s `html/template package`, which provides a family of functions for safely parsing and rendering HTML templates. We can use the functions in this package to parse the template file and then execute the template.
