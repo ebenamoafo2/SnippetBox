@@ -1,47 +1,52 @@
 package main
 
 import (
-	"log"
+	"flag"
+	"log/slog"
 	"net/http"
+	"os"
 )
 
+// Define an application struct to hold the application-wide
+//  dependencies for the web application.
+type application struct {
+	logger *slog.Logger
+}
 
  func main() {   
-// Use the http.NewServeMux() function to initialize a new servemux, then   
- // register the home function as the handler for the "/" URL pattern.    
- mux := http.NewServeMux() 
+
+//This is to avoid hardcoding the network address in our code.
+ //  Instead, we use the flag package to read the address from a command-line flag.
+ addr := flag.String("addr", ":4000", "HTTP network address")
+ flag.Parse()
+
+// Use the slog.New() function to initialize a new structured logger, which    
+// writes to the standard out stream and uses the default settings.
+ logger := slog.New(slog.NewTextHandler(os.Stdout, nil))
+
+// Initialize a new instance of our application struct, containing the   
+// dependencies (for now, just the structured logger).
+ app := &application{
+	logger: logger,
+ }
+
  
+
  
 
-//Basically for serving the css and js files we need to 
-// create a file server and then register it as the handler for all URL paths 
-// that start with "/static/". For matching paths, we strip the "/static" prefix before the request reaches the file server. 
-// This is done using the http.StripPrefix() function.
-fileServer := http.FileServer(http.Dir("./ui/static/"))
-
-//Use the mux.Handle() function to register the file server as the handler for
-// all URL paths that start with "/static/". For matching paths, we strip the
-// "/static" prefix before the request reaches the file server.
-
-mux.Handle("GET /static/", http.StripPrefix("/static/", fileServer))
-
-//register the other handlers for the remaining URL patterns.
- mux.HandleFunc("GET /{$}", home) //The {$} is used to restrict the subtree path
- mux.HandleFunc("GET /snippet/view/{id}", SnippetView) 
- mux.HandleFunc("GET /snippet/create", SnippetCreate)  
- mux.HandleFunc("POST /snippet/create", SnippetCreatePost) 
 
 
  // Print a log message to say that the server is starting.    
-log.Print("starting server on :4000")    
+logger.Info("starting server...", "addr", *addr)    
 
 // Use the http.ListenAndServe() function to start a new web server. We pass in    
 // two parameters: the TCP network address to listen on (in this case ":4000")   
 // and the servemux we just created. If http.ListenAndServe() returns an error    
 // we use the log.Fatal() function to log the error message and exit. Note  
 // that any error returned by http.ListenAndServe() is always non-nil.   
-err := http.ListenAndServe(":4000", mux)    
-log.Fatal(err)
+err := http.ListenAndServe(*addr, app.routes())    
+logger.Error(err.Error())
+os.Exit(1)
 }
 
 //The TCP network address that you pass to http.ListenAndServe() should be in the format "host:port"

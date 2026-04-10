@@ -175,3 +175,129 @@ fileserver in conjunction with a router that doesn’t automatically sanitize UR
 
 `Range requests are fully supported`. This is great if your application is serving large files
 and you want to support resumable downloads.
+
+## This is my 6th commit workflow.
+
+## The commit message is :
+
+feat: add configuration, structured logging, dependency injection, and error handling (ch. 3)
+
+This commit covers the full Chapter 3 housekeeping refactor of the Snippetbox app.
+No new user-facing features — this is all about making the codebase cleaner,
+more configurable, and easier to grow.
+
+---
+
+## 3.1 — Managing configuration settings (cmd/web/main.go)
+
+Replaced the hard-coded server address (":4000") with a command-line flag using
+Go's `flag` package. The server address is now configurable at runtime:
+
+    $ go run ./cmd/web -addr=":9999"
+
+Key things to remember:
+
+- `flag.String("addr", ":4000", "HTTP network address")` returns a _pointer_, not a string.
+- You MUST call `flag.Parse()` before using any flag value, otherwise you always get the default.
+- Dereference the pointer with `*addr` when passing it to `http.ListenAndServe()`.
+- `-help` flag is auto-generated and lists all available flags and their defaults — free docs!
+- Other flag types: flag.Int(), flag.Bool(), flag.Float64(), flag.Duration().
+- Can also use flag.StringVar() to parse directly into a struct field (useful for a config struct).
+- env vars alone are worse: no defaults, no type conversion, no -help. Pass them as flags instead:
+  $ export SNIPPETBOX_ADDR=":9999" && go run ./cmd/web -addr=$SNIPPETBOX_ADDR
+
+---
+
+## 3.2 — Structured logging (cmd/web/main.go)
+
+Swapped out log.Printf() / log.Fatal() for a custom structured logger using log/slog.
+
+    logger := slog.New(slog.NewTextHandler(os.Stdout, nil))
+    logger.Info("starting server", "addr", *addr)
+    logger.Error(err.Error())
+    os.Exit(1)  // no structured equivalent of log.Fatal(), must do this manually
+
+Log entries now include: timestamp (ms precision), severity level, message, and key-value attributes.
+
+Key things to remember:
+
+- Four severity levels: Debug < Info < Warn < Error. Default minimum level is Info (Debug is silent).
+- Attributes are key-value pairs passed after the message: logger.Info("msg", "key", value).
+- Mismatched key/value pairs produce !BADKEY in output — use slog.String(), slog.Int() etc. to be safe.
+- slog.NewJSONHandler() gives you JSON-formatted logs instead of plaintext.
+- Logging to os.Stdout decouples the app from log routing — redirect to a file with >> in prod.
+- Custom loggers are concurrency-safe and can be shared across goroutines.
+- HandlerOptions lets you set minimum log level or add source file/line info (AddSource: true).
+
+---
+
+## 3.3 — Dependency injection (cmd/web/main.go + handlers.go)
+
+Introduced an `application` struct to hold app-wide dependencies (starting with the logger),
+and converted all handler functions into methods on `*application`.
+
+    type application struct {
+        logger *slog.Logger
+    }
+
+    func (app *application) home(w http.ResponseWriter, r *http.Request) { ... }
+
+Wired up in main():
+app := &application{logger: logger}
+mux.HandleFunc("GET /{$}", app.home)
+
+Key things to remember:
+
+- Avoids global variables — makes code explicit, testable, and easier to reason about.
+- All handlers now access shared dependencies via `app.*` instead of package-level vars.
+- This pattern works when all handlers are in the same package.
+- If handlers span multiple packages, use a closure pattern with a standalone config package instead.
+- This approach scales well — as you add a DB pool, template cache etc., just add fields to the struct.
+
+---
+
+## 3.4 — Centralized error handling (cmd/web/helpers.go)
+
+Created cmd/web/helpers.go with two reusable error helper methods on \*application:
+
+    func (app *application) serverError(w, r, err)  → logs at Error level, sends 500
+    func (app *application) clientError(w, status)  → sends specific status code (e.g. 400)
+
+Uses http.StatusText() to produce human-readable status descriptions ("Internal Server Error", etc.).
+Updated handlers.go to call app.serverError() instead of inline logging + http.Error().
+
+Key things to remember:
+
+- DRY: no more copy-pasting log + http.Error() in every handler.
+- Separation of concerns: error logging logic lives in one place.
+- Optional: can include debug.Stack() in serverError() as a "trace" attribute for goroutine stack traces.
+- clientError is for user mistakes (bad input, 400, 403, 404), serverError is for our mistakes (500).
+
+---
+
+## 3.5 — Isolating application routes (cmd/web/routes.go)
+
+Extracted all mux/route declarations out of main() into a dedicated routes.go file:
+
+    func (app *application) routes() *http.ServeMux {
+        mux := http.NewServeMux()
+        // ... all route registrations ...
+        return mux
+    }
+
+main() now just calls: http.ListenAndServe(\*addr, app.routes())
+
+Key things to remember:
+
+- main() is now focused on exactly 3 things: parse config → wire dependencies → start server.
+- routes() is a method on \*application so it can reference app.home, app.snippetView, etc.
+- Keeps route declarations in one obvious place — easier to scan and modify later.
+- Sets up a good pattern for when routes grow more complex (middleware wrapping, etc.).
+
+---
+
+Files changed:
+M cmd/web/main.go — flags, structured logger, application struct, app.routes()
+M cmd/web/handlers.go — handlers converted to methods on \*application
+A cmd/web/helpers.go — serverError() and clientError() centralized helpers
+A cmd/web/routes.go — routes() method extracted from main()
