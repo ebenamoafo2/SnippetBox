@@ -178,7 +178,7 @@ and you want to support resumable downloads.
 
 ## This is my 6th commit workflow.
 
-## The commit message is :
+## The commit message is :feat(ch3): config flags, structured logging, dependency injection, centralized errors
 
 feat: add configuration, structured logging, dependency injection, and error handling (ch. 3)
 
