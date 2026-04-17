@@ -233,6 +233,19 @@ Key things to remember:
 
 ## 3.3 — Dependency injection (cmd/web/main.go + handlers.go)
 
+For many applications, using the standard logger will be good enough, and there’s no need
+to do anything more complex.
+But for applications which do a lot of logging, you may want to make the log entries easier
+to filter and work with. For example, you might want to distinguish between different
+severities of log entries (like informational and error entries), or to enforce a consistent
+structure for log entries so that they are easy for external programs or services to parse.
+To support this, the Go standard library includes the log/slog package which lets you create custom structured loggers that output log entries in a set format. Each log entry
+includes the following things:
+--A timestamp with millisecond precision.
+--The severity level of the log entry (Debug, Info, Warn or Error).
+--The log message (an arbitrary string value).
+--Optionally, any number of key-value pairs (known asattributes) containing additional information.
+
 Introduced an `application` struct to hold app-wide dependencies (starting with the logger),
 and converted all handler functions into methods on `*application`.
 
