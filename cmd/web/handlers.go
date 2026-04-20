@@ -3,7 +3,6 @@ package main
 import (
 	"errors"
 	"fmt"
-	"html/template"
 	"net/http"
 	"strconv"
 
@@ -31,38 +30,12 @@ func (app *application) home(w http.ResponseWriter, r *http.Request) {
 		app.serverError(w, r, err)
 		return
 	}
-	
-	// Use the template.ParseFiles() function to read the template file into a
-	// template set. If there's an error, we log the detailed error message, use
-	// the http.Error() function to send an Internal Server Error response to the
-	// user, and then return from the handler so no subsequent code is executed.
 
-	files := []string{
-		"ui/html/base.tmpl",
-		"ui/html/partials/nav.tmpl",
-		"ui/html/pages/home.tmpl",
-	}
-
-	ts, err := template.ParseFiles(files...)
-	if err != nil {
-		app.serverError(w, r, err)
-		return
-	}
-
-
-	// Create an instance of a templateData struct holding the snippet data.
-	data := templateData{
+	// Use the render helper to display the home page, passing in the
+	// Snippets data as part of a templateData struct.
+	app.render(w, r, http.StatusOK, "home.tmpl", templateData{
 		Snippets: snippets,
-	}
-
-	// Then we use the ExecuteTemplate() method on the template set to write the
-	// template content as the response body. The last parameter to ExecuteTemplate()
-	// represents any dynamic data that we want to pass in, which for now we'll
-	err = ts.ExecuteTemplate(w, "base", data)
-	if err != nil {
-		app.serverError(w, r, err)
-		return
-	}
+	})
 
 }
 
@@ -94,36 +67,11 @@ func (app *application) SnippetView(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Use the fmt.Sprintf() function to interpolate the id value with a
-	// message, then write it as the HTTP response.
-	// msg := fmt.Sprintf("Display a specific snippet with ID %d...", id)
-	// w.Write([]byte(msg))
-
-	files := []string{
-		"./ui/html/base.tmpl",
-		"./ui/html/partials/nav.tmpl",
-		"./ui/html/pages/view.tmpl",
-	}
-	//Parse the template files
-	ts, err := template.ParseFiles(files...)
-	if err != nil {
-		app.serverError(w, r, err)
-		return
-	}
-
-	// Create an instance of a templateData struct holding the snippet data.   
-	 data := templateData{        
-		Snippet: snippet,    
-	}
-
-
-	// And then execute them. Notice how we are passing in the snippet
-	// data (a models.Snippet struct) as the final parameter
-	err = ts.ExecuteTemplate(w, "base", data)
-	if err != nil {
-		app.serverError(w, r, err)
-		return
-	}
+	// Use the render helper to display the view page, passing in the
+	// Snippet data as part of a templateData struct.
+	app.render(w, r, http.StatusOK, "view.tmpl", templateData{
+		Snippet: snippet,
+	})
 
 }
 
