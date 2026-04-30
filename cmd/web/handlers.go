@@ -23,20 +23,19 @@ import (
 // w http.ResponseWriter: Used to send a response back to the browser in only bytes. It's a must in Go
 // r *http.Request: Contains information about the incoming request.
 func (app *application) home(w http.ResponseWriter, r *http.Request) {
-	w.Header().Add("Server", "Go")
-
+	
 	snippets, err := app.snippets.Latest()
 	if err != nil {
 		app.serverError(w, r, err)
 		return
 	}
 
+	data := app.newTemplateData(r)
+	data.Snippets = snippets
+
 	// Use the render helper to display the home page, passing in the
 	// Snippets data as part of a templateData struct.
-	app.render(w, r, http.StatusOK, "home.tmpl", templateData{
-		Snippets: snippets,
-	})
-
+	  app.render(w, r, http.StatusOK, "home.tmpl", data)
 }
 
 // SnippetView handler function
@@ -67,11 +66,12 @@ func (app *application) SnippetView(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	data := app.newTemplateData(r)
+	data.Snippet = snippet
+
 	// Use the render helper to display the view page, passing in the
 	// Snippet data as part of a templateData struct.
-	app.render(w, r, http.StatusOK, "view.tmpl", templateData{
-		Snippet: snippet,
-	})
+	  app.render(w, r, http.StatusOK, "view.tmpl", data)
 
 }
 

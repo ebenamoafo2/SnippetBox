@@ -1,6 +1,10 @@
 package main
 
-import "net/http"
+import (
+	"net/http"
+
+	"github.com/justinas/alice"
+)
 
 // Route pattern Handler Action
 // GET / home Display the home page
@@ -9,7 +13,7 @@ import "net/http"
 // POST /snippet/create snippetCreatePost Save a new snippet
 // GET /static/ http.FileServer Serve a specific static file
 
-func (app *application) routes() *http.ServeMux {
+func (app *application) routes() http.Handler {
 
 	// Use the http.NewServeMux() function to initialize a new servemux, then
 	// register the home function as the handler for the "/" URL pattern.
@@ -33,5 +37,11 @@ func (app *application) routes() *http.ServeMux {
 	mux.HandleFunc("GET /snippet/create", app.SnippetCreate)
 	mux.HandleFunc("POST /snippet/create", app.SnippetCreatePost)
 
-	return mux
+	// Create a middleware chain containing our 'standard' middleware  
+	// which will be used for every request our application receives.
+
+	standard := alice.New(app.recoverPanic, app.logRequest, commonHeaders)
+
+	//commonHeader is a middleware that wraps around all routes
+	return  standard.Then(mux)
 }
